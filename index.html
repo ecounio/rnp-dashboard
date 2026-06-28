@@ -1118,9 +1118,9 @@ function getRpTrend(d) {
 }
 
 
-// (직급 내 항목비교 카드는 중복으로 제거됨)
-function _removedBuildCompareCard(d, total, color) {
-  if(!d.scores) return '';
+// ── 직급 내 비교 분석 카드 생성 (위 그룹 / 나 / 아래 그룹) ──
+function buildCompareCard(d, total, color) {
+  if(!d.scores) return '<div class="card"><div style="color:var(--subtext);font-size:13px">R&P 세부 점수 데이터 없음</div></div>';
 
   const grade = d.grade;
   const myRank = d.rank;
@@ -1192,11 +1192,6 @@ function _removedBuildCompareCard(d, total, color) {
         </thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>
-    <!-- 총점 비교 바 차트 -->
-    <div style="margin-top:14px">
-      <div style="font-size:11px;color:var(--subtext);margin-bottom:6px">R&P 총점 위치 비교</div>
-      <div class="ch"><canvas id="c-grade-cmp"></canvas></div>
     </div>
   </div>`;
 }
@@ -1286,6 +1281,9 @@ function openGradeModal(name, branch) {
           <div class="ch"><canvas id="c-rp-trend"></canvas></div>
         </div>
       </div>`:''}
+
+      <!-- 직급 내 비교 분석 (위 그룹 / 나 / 아래 그룹) · 전 모드 -->
+      ${buildCompareCard(d, total, color)}
     </div>`;
 
   document.getElementById('modal').classList.remove('hidden');
