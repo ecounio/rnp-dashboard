@@ -279,7 +279,7 @@ function renderHeader(){
     <button class="tab-btn" onclick="showTab('national',this)">🌐 일반병원</button>
     <button class="tab-btn" onclick="showTab('bjg',this)">📋 부지점장</button>
     <button class="tab-btn" onclick="showTab('jjg',this)">🏢 지점장</button>
-    ${isAdmin ? `<button class="tab-btn" onclick="showTab('grade',this)">🏅 직급별</button>` : ''}
+    ${USER_LEVEL >= 1 ? `<button class="tab-btn" onclick="showTab('grade',this)">🏅 직급별</button>` : ''}
   `;
   document.querySelector('.header-title .t2').innerHTML =
     'R&P 대시보드 · 2026 상반기 1~4월' + adminBadge;
@@ -295,7 +295,7 @@ function showTab(tab,btn){
   if(tab==='bjg') renderBjg();
   if(tab==='jjg') renderJjg();
   if(tab==='grade') {
-    if(USER_LEVEL < 2) { alert('관리자만 접근 가능합니다.'); return; }
+    if(USER_LEVEL < 1) { alert('로그인이 필요합니다.'); return; }
     renderGrade();
   }
 }
@@ -1008,6 +1008,7 @@ let selectedGrade = null; // null=전체
 
 function renderGrade() {
   const el = document.getElementById('tab-grade');
+  const isAdmin = USER_LEVEL >= 2;
   const jeonamSet = new Set(JEONAM_NAMES);
 
   // 직급별 인원수
@@ -1023,13 +1024,13 @@ function renderGrade() {
   el.innerHTML = `
     <!-- 필터 바 -->
     <div style="padding:14px 16px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <button class="filter-btn ${gradeFilter==='jeonam'?'active':''}" onclick="gradeFilter='jeonam';gradeSearch='';renderGradeList()">📍 전남지점</button>
-      <button class="filter-btn ${gradeFilter==='all'?'active':''}" onclick="gradeFilter='all';gradeSearch='';renderGradeList()">🌐 전체</button>
+      <button class="filter-btn ${gradeFilter==='jeonam'?'active':''}" onclick="gradeFilter='jeonam';gradeSearch='';renderGrade()">📍 전남지점</button>
+      <button class="filter-btn ${gradeFilter==='all'?'active':''}" onclick="gradeFilter='all';gradeSearch='';renderGrade()">🌐 전체</button>
       <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
         ${GRADE_ORDER.map(g=>{
           const cnt = gradeFilter==='jeonam'?jeonamCounts[g]:gradeCounts[g];
           const isActive = selectedGrade===g;
-          return `<button onclick="selectedGrade=selectedGrade==='${g}'?null:'${g}';renderGradeList()"
+          return `<button onclick="selectedGrade=selectedGrade==='${g}'?null:'${g}';renderGrade()"
             style="padding:5px 10px;border-radius:16px;border:1px solid ${GRADE_COLOR[g]}66;
               background:${isActive?GRADE_COLOR[g]+'33':'transparent'};
               color:${GRADE_COLOR[g]};font-size:11px;font-weight:700;cursor:pointer">
@@ -1040,7 +1041,7 @@ function renderGrade() {
     </div>
     <!-- 검색 -->
     <div class="search-bar">
-      <input class="search-input" placeholder="🔍 이름/사번 검색..." value="${gradeSearch}"
+      <input class="search-input" placeholder="${isAdmin?'🔍 이름/사번 검색...':'🔍 이름 검색...'}" value="${gradeSearch}"
         oninput="gradeSearch=this.value;renderGradeList()">
     </div>
     <div id="grade-list"></div>`;
@@ -1055,7 +1056,7 @@ function renderGradeList() {
   let list = GRADE_DATA;
   if(gradeFilter==='jeonam') list = list.filter(d=>d.branch.includes('전남'));
   if(selectedGrade) list = list.filter(d=>d.grade===selectedGrade);
-  if(gradeSearch) list = list.filter(d=>d.name.includes(gradeSearch)||d.emp_id.includes(gradeSearch));
+  if(gradeSearch) list = list.filter(d=>d.name.includes(gradeSearch)||(USER_LEVEL>=2&&d.emp_id.includes(gradeSearch)));
 
   // 직급 그룹별로 렌더
   const byGrade = {};
@@ -1117,9 +1118,9 @@ function getRpTrend(d) {
 }
 
 
-// ── 직급 내 비교 분석 카드 생성 ─────────────────────────────
-function buildCompareCard(d, total, color) {
-  if(!d.scores) return '<div class="card"><div style="color:var(--subtext);font-size:13px">R&P 세부 점수 데이터 없음</div></div>';
+// (직급 내 항목비교 카드는 중복으로 제거됨)
+function _removedBuildCompareCard(d, total, color) {
+  if(!d.scores) return '';
 
   const grade = d.grade;
   const myRank = d.rank;
@@ -1204,6 +1205,7 @@ function buildCompareCard(d, total, color) {
 function openGradeModal(name, branch) {
   const d = GRADE_DATA.find(x=>x.name===name&&x.branch===branch)||GRADE_DATA.find(x=>x.name===name);
   if(!d) return;
+  const isAdmin = USER_LEVEL >= 2;
   const color = GRADE_COLOR[d.grade] || '#4f8ef7';
   const total = gradeTotal(d.grade);
   const pct = rankPct(d.rank, total);
@@ -1222,16 +1224,16 @@ function openGradeModal(name, branch) {
     <div class="modal-header">
       <div>
         <div style="font-size:11px;color:var(--subtext);margin-bottom:5px">
-          ${d.grade} · ${d.branch} · ${d.emp_id}
+          ${d.grade} · ${d.branch}${isAdmin?` · ${d.emp_id}`:''}
         </div>
         <div style="font-size:24px;font-weight:800;margin-bottom:8px">${d.name}</div>
         <div>
           <span class="bdg" style="background:${color}22;color:${color};border:1px solid ${color}55">
             직급내 ${d.rank}위 / ${total}명 (상위 ${pct}%)
           </span>
-          <span class="bdg" style="background:#4f8ef722;color:#4f8ef7;border:1px solid #4f8ef755">
+          ${isAdmin?`<span class="bdg" style="background:#4f8ef722;color:#4f8ef7;border:1px solid #4f8ef755">
             3년 평균순위 ${d.rp_avg}위
-          </span>
+          </span>`:''}
           ${d.promo_year?`<span class="bdg" style="background:#f0b42922;color:#f0b429;border:1px solid #f0b42955">승진 ${d.promo_year}년</span>`:''}</div>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -1247,8 +1249,8 @@ function openGradeModal(name, branch) {
         </div>
       </div>
 
-      <!-- R&P 반기별 순위 (3년 6개 반기) -->
-      <div class="card">
+      <!-- R&P 반기별 순위 (3년 6개 반기) · 관리자 전용 -->
+      ${isAdmin?`<div class="card">
         <div style="font-size:13px;font-weight:700;margin-bottom:12px">📊 반기별 R&P 순위 추이</div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:360px">
@@ -1283,10 +1285,7 @@ function openGradeModal(name, branch) {
           <div style="font-size:11px;color:var(--subtext);margin-bottom:6px">반기별 순위 추이 (낮을수록 좋음)</div>
           <div class="ch"><canvas id="c-rp-trend"></canvas></div>
         </div>
-      </div>
-
-      <!-- 직급 내 비교 분석 -->
-      ${buildCompareCard(d, total, color)}
+      </div>`:''}
     </div>`;
 
   document.getElementById('modal').classList.remove('hidden');
@@ -1295,7 +1294,7 @@ function openGradeModal(name, branch) {
     // R&P 순위 추이 차트 (반기별)
     const rpLabels = rpRows.map(r=>r.label).filter((_,i)=>d[rpRows[i].key]);
     const rpVals = rpRows.map(r=>d[r.key]).filter(v=>v);
-    if(rpVals.length >= 2) {
+    if(isAdmin && rpVals.length >= 2) {
       mkCh('c-rp-trend','line',{
         labels: rpLabels.reverse(),
         datasets: [{
@@ -1331,31 +1330,6 @@ function openGradeModal(name, branch) {
       });
     }
 
-    // 2025 vs 2026 실적 비교 차트
-    const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-    
-    // 직급 내 총점 비교 바차트
-    const gradeWithScores = GRADE_DATA.filter(x=>x.grade===d.grade&&x.scores);
-    const above2 = gradeWithScores.filter(x=>x.rank<d.rank);
-    const below2 = gradeWithScores.filter(x=>x.rank>d.rank);
-    const avgOf = (arr,key) => arr.length ? Math.round(arr.reduce((s,x)=>s+(x.scores[key]||0),0)/arr.length*10)/10 : 0;
-    mkCh('c-grade-cmp','bar',{
-      labels:['나보다 위 평균','나','나보다 아래 평균'],
-      datasets:[{
-        data:[avgOf(above2,'total'), d.scores?d.scores.total:0, avgOf(below2,'total')],
-        backgroundColor:['#34d399aa', color+'cc', '#6b728055'],
-        borderColor:['#34d399',''+color,'#6b7280'],
-        borderWidth:1.5, borderRadius:6
-      }]
-    },{
-      ...BASE,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}점`}}},
-      scales:{
-        x:{ticks:{color:'#9ca3af',font:{size:11}},grid:{color:'#2e345033'}},
-        y:{ticks:{color:'#9ca3af',font:{size:10}},grid:{color:'#2e345033'},min:200}
-      },
-      responsive:true,maintainAspectRatio:false
-    });
   }, 80);
 }
 
