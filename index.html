@@ -2,8 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>전남 Clinic R&P 대시보드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>R&P ON</title>
+
+<!-- PWA 설정 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f8ef7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="R&P ON">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -107,8 +116,9 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
 <div id="login-screen">
   <div style="text-align:center;width:100%;max-width:360px">
     <div style="font-size:44px;margin-bottom:10px">📊</div>
-    <div style="font-size:24px;font-weight:800;color:var(--accent);margin-bottom:4px">전남 Clinic</div>
-    <div style="font-size:13px;color:var(--subtext);margin-bottom:28px">R&P 대시보드 · 2026년 상반기</div>
+    <div style="font-size:32px;font-weight:900;color:var(--accent);margin-bottom:4px;letter-spacing:-1px">R&P ON</div>
+    <div style="font-size:13px;color:var(--subtext);margin-bottom:4px">전남 Clinic · 2026년 상반기</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:24px">R&P 대시보드</div>
     <div class="login-box">
       <div style="font-size:12px;color:var(--subtext);text-align:left;margin-bottom:8px">비밀번호</div>
       <input class="login-input" id="pw-input" type="password" placeholder="비밀번호 입력"
@@ -123,8 +133,8 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
 <div id="app-screen">
   <div class="header">
     <div class="header-title">
-      <div class="t1">전남 Clinic</div>
-      <div class="t2">R&P 대시보드 · 2026 상반기 1~4월</div>
+      <div class="t1">R&P ON</div>
+      <div class="t2">전남 Clinic · 2026 상반기 1~4월</div>
     </div>
     <div class="tabs">
       <button class="tab-btn active" onclick="showTab('jeonam',this)">📍 전남지점</button>
@@ -1470,6 +1480,17 @@ function openJjgModal(){
   document.getElementById('modal').classList.remove('hidden');
 }
 
+</script>
+
+<!-- PWA 서비스워커 등록 -->
+<script>
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('SW 등록 완료:', reg.scope))
+      .catch(err => console.log('SW 등록 실패:', err));
+  });
+}
 </script>
 </body>
 </html>
