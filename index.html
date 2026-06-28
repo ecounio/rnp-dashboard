@@ -1349,7 +1349,7 @@ function renderBjg(){
   h+='<div class="bjg-grid">';
   BJG.forEach(b=>{
     const bg=getBadge(b.rank,BJG_TOTAL);
-    h+=`<div class="bjg-card" onclick="openBjgModal('${b.name}')">
+    h+=`<div class="bjg-card" onclick="openBjgModal('${b.name}',${b.rank})">
       <div style="font-size:10px;color:var(--subtext);margin-bottom:3px">${b.team}</div>
       <div style="font-size:17px;font-weight:800;margin-bottom:8px">${b.name}</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end">
@@ -1364,21 +1364,29 @@ function renderBjg(){
   BJG_ALL.forEach(b=>{
     const isJ=JBJG.has(b.name)&&b.branch==='전남';
     const rs=isJ?'background:#4f8ef715;border-left:3px solid var(--accent)':'';
-    const oc=isJ?`onclick="openBjgModal('${b.name}')" style="${rs};cursor:pointer"`:`style="${rs}"`;
+    const oc=`onclick="openBjgModal('${b.name}',${b.rank})" style="${rs};cursor:pointer"`;
     h+=`<tr ${oc}><td style="padding:9px 12px;font-weight:700">${b.rank}등</td><td style="padding:9px 12px;font-size:12px">${b.branch}${isJ?'<span style="color:var(--accent);margin-left:4px">●</span>':''}</td><td style="padding:9px 12px;font-weight:${isJ?700:400}">${b.name}</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:${isJ?'var(--accent)':'var(--text)'}">${b.total}</td></tr>`;
   });
   h+='</tbody></table></div></div>';
   el.innerHTML=h;
 }
-function openBjgModal(name){
-  const b=BJG.find(x=>x.name===name); if(!b) return;
-  const jr=BJG.findIndex(x=>x.name===name)+1, bg=getBadge(b.rank,BJG_TOTAL);
+function openBjgModal(name,rank){
+  const b=(rank!=null?BJG_ALL.find(x=>x.rank===rank):null)||BJG_ALL.find(x=>x.name===name); if(!b) return;
+  const isJ=JBJG.has(b.name)&&b.branch==='전남';
+  const jb=BJG.find(x=>x.name===b.name);
+  const monthly=(b.monthly)||(jb&&jb.monthly)||{};
+  const hasMonthly=MONTHS.some(mn=>monthly[mn]&&monthly[mn].rank!=null);
+  const jr=isJ?BJG.findIndex(x=>x.name===b.name)+1:null;
+  const bg=getBadge(b.rank,BJG_TOTAL);
+  const monthHtml=hasMonthly
+    ? `<div class="month-grid">${MONTHS.map(mn=>{const d=monthly[mn]||{},r=d.rank;const rc=r<=15?'#34d399':r<=30?'#4f8ef7':r<=45?'#f0b429':'#f87171';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;}).join('')}</div>`
+    : `<div style="text-align:center;color:var(--subtext);font-size:13px;padding:20px">📅 월별 데이터 없음</div>`;
   document.getElementById('modal-box').innerHTML=`
     <div class="modal-header">
       <div>
-        <div style="font-size:11px;color:var(--subtext);margin-bottom:5px">부지점장 · ${b.team}</div>
+        <div style="font-size:11px;color:var(--subtext);margin-bottom:5px">부지점장 · ${b.team||b.branch}</div>
         <div style="font-size:24px;font-weight:800;margin-bottom:8px">${b.name}</div>
-        <div>${bdg(bg.label,bg.color)}${bdg('전국 '+b.rank+'등 / '+BJG_TOTAL+'명','#4f8ef7')}${bdg('전남 '+jr+'등 / 4명','#f0b429')}</div>
+        <div>${bdg(bg.label,bg.color)}${bdg('전국 '+b.rank+'등 / '+BJG_TOTAL+'명','#4f8ef7')}${isJ&&jr?bdg('전남 '+jr+'등 / 4명','#f0b429'):''}</div>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
@@ -1386,15 +1394,12 @@ function openBjgModal(name){
       <div class="score-box"><div class="score-big">${b.total}</div><div><div style="font-size:13px;color:var(--subtext)">R&P 총점</div></div></div>
       <div class="rank-row">
         <div class="rank-box"><div class="rn" style="color:${bg.color}">${b.rank}등</div><div class="rl">전국 ${BJG_TOTAL}명 중</div></div>
-        <div class="rank-box"><div class="rn" style="color:#f0b429">${jr}등</div><div class="rl">전남 4명 중</div></div>
+        ${isJ&&jr?`<div class="rank-box"><div class="rn" style="color:#f0b429">${jr}등</div><div class="rl">전남 4명 중</div></div>`:`<div class="rank-box"><div class="rn" style="color:var(--subtext)">${b.branch}</div><div class="rl">지점</div></div>`}
         <div class="rank-box"><div class="rn" style="color:${bg.color}">상위 ${getPct(b.rank,BJG_TOTAL)}%</div><div class="rl">전국 기준</div></div>
       </div>
       <div class="card">
         <div style="font-size:13px;font-weight:700;margin-bottom:12px">📅 월별 성적</div>
-        <div class="month-grid">
-          ${MONTHS.map(mn=>{const d=b.monthly[mn]||{},r=d.rank;const rc=r<=15?'#34d399':r<=30?'#4f8ef7':r<=45?'#f0b429':'#f87171';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;
-          }).join('')}
-        </div>
+        ${monthHtml}
       </div>
     </div>`;
   document.getElementById('modal').classList.remove('hidden');
@@ -1404,7 +1409,7 @@ function openBjgModal(name){
 function renderJjg(){
   const el=document.getElementById('tab-jjg'), j=JJG, bg=getBadge(j.rank,JJG_TOTAL);
   let h='<div style="padding:16px">';
-  h+=`<div class="card" style="border-color:#f0b42966;cursor:pointer;margin-bottom:14px" onclick="openJjgModal()">
+  h+=`<div class="card" style="border-color:#f0b42966;cursor:pointer;margin-bottom:14px" onclick="openJjgModal('서기덕')">
     <div style="font-size:11px;color:var(--subtext);margin-bottom:4px">전남지점장</div>
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div><div style="font-size:22px;font-weight:800;margin-bottom:8px">서기덕</div>
@@ -1420,35 +1425,40 @@ function renderJjg(){
   h+='<div style="border-radius:10px;border:1px solid var(--border);overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--surface)"><th style="padding:9px 12px;text-align:left;color:var(--subtext);font-size:11px">순위</th><th style="padding:9px 12px;text-align:left;color:var(--subtext);font-size:11px">지점</th><th style="padding:9px 12px;text-align:left;color:var(--subtext);font-size:11px">이름</th><th style="padding:9px 12px;text-align:right;color:var(--subtext);font-size:11px">총점</th></tr></thead><tbody>';
   JJG_ALL.forEach(j2=>{
     const isJ=j2.name==='서기덕',rs=isJ?'background:#f0b42915;border-left:3px solid var(--gold)':'';
-    h+=`<tr style="${rs}"><td style="padding:9px 12px;font-weight:700">${j2.rank}등</td><td style="padding:9px 12px;font-size:12px">${j2.branch}${isJ?'':''}</td><td style="padding:9px 12px;font-weight:${isJ?700:400}">${j2.name}</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:${isJ?'var(--gold)':'var(--text)'}">${j2.total}</td></tr>`;
+    h+=`<tr onclick="openJjgModal('${j2.name}')" style="cursor:pointer;${rs}"><td style="padding:9px 12px;font-weight:700">${j2.rank}등</td><td style="padding:9px 12px;font-size:12px">${j2.branch}${isJ?'':''}</td><td style="padding:9px 12px;font-weight:${isJ?700:400}">${j2.name}</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:${isJ?'var(--gold)':'var(--text)'}">${j2.total}</td></tr>`;
   });
   h+='</tbody></table></div></div>';
   el.innerHTML=h;
 }
-function openJjgModal(){
-  const j=JJG,bg=getBadge(j.rank,JJG_TOTAL);
+function openJjgModal(name){
+  const j=JJG_ALL.find(x=>x.name===name); if(!j) return;
+  const isSeo=j.name==='서기덕';
+  const monthly=(isSeo?JJG.monthly:j.monthly)||{};
+  const hasMonthly=MONTHS.some(mn=>monthly[mn]&&monthly[mn].rank!=null);
+  const bg=getBadge(j.rank,JJG_TOTAL);
+  const mainColor=isSeo?'var(--gold)':bg.color;
+  const monthHtml=hasMonthly
+    ? `<div class="month-grid">${MONTHS.map(mn=>{const d=monthly[mn]||{},r=d.rank;const rc=r<=3?'#34d399':r<=6?'#f0b429':'#f87171';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;}).join('')}</div>`
+    : `<div style="text-align:center;color:var(--subtext);font-size:13px;padding:20px">📅 월별 데이터 없음</div>`;
   document.getElementById('modal-box').innerHTML=`
     <div class="modal-header">
       <div>
-        <div style="font-size:11px;color:var(--subtext);margin-bottom:5px">전남지점장</div>
-        <div style="font-size:24px;font-weight:800;margin-bottom:8px">서기덕</div>
-        <div>${bdg(bg.label,bg.color)}${bdg('전국 '+j.rank+'등 / '+JJG_TOTAL+'명','#f0b429')}</div>
+        <div style="font-size:11px;color:var(--subtext);margin-bottom:5px">${isSeo?'전남지점장':j.branch+' 지점장'}</div>
+        <div style="font-size:24px;font-weight:800;margin-bottom:8px">${j.name}</div>
+        <div>${bdg(bg.label,bg.color)}${bdg('전국 '+j.rank+'등 / '+JJG_TOTAL+'명',isSeo?'#f0b429':'#4f8ef7')}</div>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="score-box"><div class="score-big" style="color:var(--gold)">${j.total}</div><div><div style="font-size:13px;color:var(--subtext)">R&P 총점</div></div></div>
+      <div class="score-box"><div class="score-big" style="color:${mainColor}">${j.total}</div><div><div style="font-size:13px;color:var(--subtext)">R&P 총점</div></div></div>
       <div class="rank-row">
-        <div class="rank-box"><div class="rn" style="color:var(--gold)">${j.rank}등</div><div class="rl">전국 ${JJG_TOTAL}명 중</div></div>
+        <div class="rank-box"><div class="rn" style="color:${mainColor}">${j.rank}등</div><div class="rl">전국 ${JJG_TOTAL}명 중</div></div>
         <div class="rank-box"><div class="rn" style="color:${bg.color}">상위 ${getPct(j.rank,JJG_TOTAL)}%</div><div class="rl">전국 기준</div></div>
-        <div class="rank-box"><div class="rn" style="color:var(--gold)">1등</div><div class="rl">전남지점 내</div></div>
+        ${isSeo?`<div class="rank-box"><div class="rn" style="color:var(--gold)">1등</div><div class="rl">전남지점 내</div></div>`:`<div class="rank-box"><div class="rn" style="color:var(--subtext)">${j.branch}</div><div class="rl">지점</div></div>`}
       </div>
       <div class="card">
         <div style="font-size:13px;font-weight:700;margin-bottom:12px">📅 월별 성적</div>
-        <div class="month-grid">
-          ${MONTHS.map(mn=>{const d=j.monthly[mn]||{},r=d.rank;const rc=r<=3?'#34d399':r<=6?'#f0b429':'#f87171';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;
-          }).join('')}
-        </div>
+        ${monthHtml}
       </div>
     </div>`;
   document.getElementById('modal').classList.remove('hidden');
