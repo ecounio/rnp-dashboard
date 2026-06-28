@@ -227,7 +227,7 @@ function getBadge(r,t){
   if(p<=10) return{label:'🏆 Top 10%',color:'#f0b429'};
   if(p<=25) return{label:'🥇 Top 25%',color:'#34d399'};
   if(p<=50) return{label:'✅ Top 50%',color:'#4f8ef7'};
-  return{label:'📊 하위 50%',color:'#f87171'};
+  return{label:'📊 하위 50%',color:'#9ca3af'};
 }
 function bdg(label,color){return `<span class="bdg" style="background:${color}22;color:${color};border:1px solid ${color}55">${label}</span>`;}
 function dot(team){return `<span class="dot" style="background:${TC[team]||'#6b7280'}"></span>`;}
@@ -277,8 +277,8 @@ function renderHeader(){
   document.querySelector('.tabs').innerHTML = `
     <button class="tab-btn active" onclick="showTab('jeonam',this)">📍 전남지점</button>
     <button class="tab-btn" onclick="showTab('national',this)">🌐 일반병원</button>
-    <button class="tab-btn" onclick="showTab('bjg',this)">📋 부지점장</button>
-    <button class="tab-btn" onclick="showTab('jjg',this)">🏢 지점장</button>
+    ${isAdmin ? `<button class="tab-btn" onclick="showTab('bjg',this)">📋 부지점장</button>` : ''}
+    ${isAdmin ? `<button class="tab-btn" onclick="showTab('jjg',this)">🏢 지점장</button>` : ''}
     ${USER_LEVEL >= 1 ? `<button class="tab-btn" onclick="showTab('grade',this)">🏅 직급별</button>` : ''}
   `;
   document.querySelector('.header-title .t2').innerHTML =
@@ -292,8 +292,8 @@ function showTab(tab,btn){
   ['jeonam','national','bjg','jjg','grade'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab));
   if(tab==='jeonam') renderJeonam();
   if(tab==='national') renderNational();
-  if(tab==='bjg') renderBjg();
-  if(tab==='jjg') renderJjg();
+  if(tab==='bjg') { if(USER_LEVEL < 2) return; renderBjg(); }
+  if(tab==='jjg') { if(USER_LEVEL < 2) return; renderJjg(); }
   if(tab==='grade') {
     if(USER_LEVEL < 1) { alert('로그인이 필요합니다.'); return; }
     renderGrade();
@@ -427,7 +427,7 @@ function openModal(name, branch){
         <div class="month-grid">
           ${MONTHS.map(mn=>{
             const d=mo[mn]||{}, r=d.rank;
-            const rc=r<=50?'#34d399':r<=100?'#4f8ef7':r<=150?'#f0b429':'#f87171';
+            const rc=r<=50?'#34d399':r<=100?'#4f8ef7':r<=150?'#f0b429':'#9ca3af';
             return `<div class="mm-card">
               <div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div>
               <div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div>
@@ -1081,7 +1081,7 @@ function renderGradeList() {
     members.forEach(d => {
       const isJeonam = d.branch.includes('전남');
       const pct = rankPct(d.rank, total);
-      const pctColor = pct<=25?'#34d399':pct<=50?'#4f8ef7':pct<=75?'#f0b429':'#f87171';
+      const pctColor = pct<=25?'#34d399':pct<=50?'#4f8ef7':pct<=75?'#f0b429':'#9ca3af';
 
       html += `<div onclick="openGradeModal('${d.name}','${d.branch}')"
         style="display:flex;align-items:center;gap:12px;padding:13px 16px;
@@ -1262,7 +1262,7 @@ function openGradeModal(name, branch) {
                 const v = d[row.key];
                 if(!v) return '';
                 const p = rankPct(v, TOTAL); // R&P 순위는 전국 담당자 기준(258명)
-                const bc = p<=25?'#34d399':p<=50?'#4f8ef7':p<=75?'#f0b429':'#f87171';
+                const bc = p<=25?'#34d399':p<=50?'#4f8ef7':p<=75?'#f0b429':'#9ca3af';
                 return `<tr style="border-bottom:1px solid #ffffff08">
                   <td style="padding:9px 10px;color:var(--text)">${row.label}</td>
                   <td style="padding:9px 10px;text-align:center">
@@ -1377,7 +1377,7 @@ function openBjgModal(name,rank){
   const jr=isJ?BJG.findIndex(x=>x.name===b.name)+1:null;
   const bg=getBadge(b.rank,BJG_TOTAL);
   const monthHtml=hasMonthly
-    ? `<div class="month-grid">${MONTHS.map(mn=>{const d=monthly[mn]||{},r=d.rank;const rc=r<=15?'#34d399':r<=30?'#4f8ef7':r<=45?'#f0b429':'#f87171';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;}).join('')}</div>`
+    ? `<div class="month-grid">${MONTHS.map(mn=>{const d=monthly[mn]||{},r=d.rank;const rc=r<=15?'#34d399':r<=30?'#4f8ef7':r<=45?'#f0b429':'#9ca3af';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;}).join('')}</div>`
     : `<div style="text-align:center;color:var(--subtext);font-size:13px;padding:20px">📅 월별 데이터 없음</div>`;
   document.getElementById('modal-box').innerHTML=`
     <div class="modal-header">
@@ -1436,7 +1436,7 @@ function openJjgModal(name){
   const bg=getBadge(j.rank,JJG_TOTAL);
   const mainColor=isSeo?'var(--gold)':bg.color;
   const monthHtml=hasMonthly
-    ? `<div class="month-grid">${MONTHS.map(mn=>{const d=monthly[mn]||{},r=d.rank;const rc=r<=3?'#34d399':r<=6?'#f0b429':'#f87171';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;}).join('')}</div>`
+    ? `<div class="month-grid">${MONTHS.map(mn=>{const d=monthly[mn]||{},r=d.rank;const rc=r<=3?'#34d399':r<=6?'#f0b429':'#9ca3af';return`<div class="mm-card"><div style="font-size:12px;font-weight:700;color:var(--subtext);margin-bottom:8px">${mn}</div><div style="font-size:21px;font-weight:900;color:#e8eaf6;line-height:1;margin-bottom:6px">${d.total||'—'}</div><div style="font-size:21px;font-weight:900;color:${r?rc:'var(--muted)'};line-height:1">${r?r+'등':'—'}</div></div>`;}).join('')}</div>`
     : `<div style="text-align:center;color:var(--subtext);font-size:13px;padding:20px">📅 월별 데이터 없음</div>`;
   document.getElementById('modal-box').innerHTML=`
     <div class="modal-header">
