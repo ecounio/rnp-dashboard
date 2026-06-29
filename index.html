@@ -771,8 +771,10 @@ function makeComments(m, mo, items) {
   const r = [];
 
   // ── 1. 총점 평가 ──────────────────────────────────────────
-  const toTop25 = (SCORE_DIST[Math.ceil(TOTAL*0.25)-1]||AVG) - cur;
-  const toTop10 = (SCORE_DIST[Math.ceil(TOTAL*0.10)-1]||AVG) - cur;
+  const top25cut = SCORE_DIST[Math.ceil(TOTAL*0.25)-1] || AVG;
+  const top10cut = SCORE_DIST[Math.ceil(TOTAL*0.10)-1] || AVG;
+  const toTop25 = top25cut - cur;
+  const toTop10 = top10cut - cur;
   if (p <= 10) {
     r.push(`<div class="ci"><div class="ci-lbl">🏆 총점 평가</div>
       <strong>${cur}점</strong>으로 전국 <strong>Top 10%</strong> 우수 성적입니다.
@@ -781,12 +783,12 @@ function makeComments(m, mo, items) {
   } else if (p <= 25) {
     r.push(`<div class="ci"><div class="ci-lbl">✅ 총점 평가</div>
       <strong>${cur}점</strong>으로 전국 상위 ${p}% 우수 성적입니다.
-      Top 10% (약 430점) 진입까지 <span style="color:#f0b429">약 ${toTop10.toFixed(0)}점</span> 필요합니다.
+      Top 10% (약 ${top10cut.toFixed(0)}점) 진입까지 <span style="color:#f0b429">약 ${toTop10.toFixed(0)}점</span> 필요합니다.
     </div>`);
   } else if (p <= 50) {
     r.push(`<div class="ci"><div class="ci-lbl">📊 총점 평가</div>
       <strong>${cur}점</strong>으로 전국 상위 ${p}% 수준입니다.
-      Top 25% (약 363점) 진입까지 <span style="color:#f0b429">약 ${toTop25.toFixed(0)}점</span> 필요합니다.
+      Top 25% (약 ${top25cut.toFixed(0)}점) 진입까지 <span style="color:#f0b429">약 ${toTop25.toFixed(0)}점</span> 필요합니다.
     </div>`);
   } else {
     r.push(`<div class="ci"><div class="ci-lbl">⚠️ 총점 평가</div>
