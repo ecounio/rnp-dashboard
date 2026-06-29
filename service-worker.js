@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rnp-on-v5';
+const CACHE_NAME = 'rnp-on-v6';
 const ASSETS = [
   '/rnp-dashboard/',
   '/rnp-dashboard/index.html',
